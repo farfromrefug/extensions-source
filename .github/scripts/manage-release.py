@@ -57,7 +57,7 @@ def determine_version() -> str:
     Determine the version to use for the release.
     - If no tags exist, return v1.0.0
     - If building from a tag, use that tag
-    - Otherwise, increment the latest tag's patch version
+    - Otherwise, update the latest existing tag (don't increment)
     """
     current_tag = get_current_tag()
     if current_tag:
@@ -69,9 +69,8 @@ def determine_version() -> str:
         print("No existing tags found, using v1.0.0", file=sys.stderr)
         return "v1.0.0"
     
-    new_version = increment_version(latest_tag)
-    print(f"Incrementing version from {latest_tag} to {new_version}", file=sys.stderr)
-    return new_version
+    print(f"Updating latest release: {latest_tag}", file=sys.stderr)
+    return latest_tag
 
 
 if __name__ == "__main__":

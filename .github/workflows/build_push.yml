@@ -163,11 +163,16 @@ jobs:
         run: |
           # Check if release exists
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
-            echo "Release $RELEASE_TAG exists, deleting old assets..."
-            gh release delete "$RELEASE_TAG" --yes --cleanup-tag || true
+            echo "Release $RELEASE_TAG exists, updating..."
+            # Delete the release but keep the tag
+            gh release delete "$RELEASE_TAG" --yes || true
           fi
           
-          # Create new release
+          # Delete the tag if it exists
+          git push origin :refs/tags/"$RELEASE_TAG" 2>/dev/null || true
+          git tag -d "$RELEASE_TAG" 2>/dev/null || true
+          
+          # Create new release with tag
           echo "Creating release $RELEASE_TAG..."
           gh release create "$RELEASE_TAG" \
             --title "Extensions Release $RELEASE_TAG" \
@@ -180,6 +185,7 @@ jobs:
           RELEASE_TAG: ${{ steps.version.outputs.version }}
         run: |
           cd repo/apk
+          shopt -s nullglob
           for apk in *.apk; do
             echo "Uploading $apk..."
             gh release upload "$RELEASE_TAG" "$apk" --clobber
@@ -191,6 +197,7 @@ jobs:
           RELEASE_TAG: ${{ steps.version.outputs.version }}
         run: |
           cd repo/icon
+          shopt -s nullglob
           for icon in *.png; do
             echo "Uploading $icon..."
             gh release upload "$RELEASE_TAG" "$icon" --clobber
