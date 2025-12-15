@@ -2,6 +2,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 from zipfile import ZipFile
 
@@ -19,6 +20,17 @@ REPO_APK_DIR = REPO_DIR / "apk"
 REPO_ICON_DIR = REPO_DIR / "icon"
 
 REPO_ICON_DIR.mkdir(parents=True, exist_ok=True)
+
+# Get repository and release tag from environment or arguments
+GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY", "")
+RELEASE_TAG = sys.argv[1] if len(sys.argv) > 1 else ""
+
+# Generate base URL for release assets
+if GITHUB_REPOSITORY and RELEASE_TAG:
+    BASE_URL = f"https://github.com/{GITHUB_REPOSITORY}/releases/download/{RELEASE_TAG}"
+else:
+    # Fallback to relative paths if not provided
+    BASE_URL = ""
 
 with open("output.json", encoding="utf-8") as f:
     inspector_data = json.load(f)
@@ -58,10 +70,13 @@ for apk in REPO_APK_DIR.iterdir():
         ):
             language = source_language
 
+    # Determine the apk URL based on whether we have a release tag
+    apk_url = f"{BASE_URL}/{apk.name}" if BASE_URL else apk.name
+    
     common_data = {
         "name": APPLICATION_LABEL_REGEX.search(badging).group(1),
         "pkg": package_name,
-        "apk": apk.name,
+        "apk": apk_url,
         "lang": language,
         "code": int(VERSION_CODE_REGEX.search(package_info).group(1)),
         "version": VERSION_NAME_REGEX.search(package_info).group(1),
