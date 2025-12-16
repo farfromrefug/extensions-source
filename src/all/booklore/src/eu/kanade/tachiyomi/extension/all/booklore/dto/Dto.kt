@@ -53,20 +53,11 @@ class SeriesDto(
 @Serializable
 class SeriesMetadataDto(
     val status: String,
-    val created: String?,
-    val lastModified: String?,
     val title: String,
-    val titleSort: String,
     val summary: String?,
-    val summaryLock: Boolean,
-    val publisher: String?,
-    val publisherLock: Boolean,
     val language: String?,
-    val languageLock: Boolean,
     val genres: Set<String>,
-    val genresLock: Boolean,
     val tags: Set<String>,
-    val tagsLock: Boolean,
     val totalBookCount: Int? = null,
 )
 
@@ -74,20 +65,14 @@ class SeriesMetadataDto(
 class BookMetadataAggregationDto(
     val authors: List<AuthorDto> = emptyList(),
     val tags: Set<String> = emptySet(),
-    val releaseDate: String?,
     val summary: String?,
 )
 
 @Serializable
 class BookDto(
     val id: String,
-    val seriesId: String,
     val seriesTitle: String,
-    val name: String,
-    val number: Float,
     val created: String?,
-    val url: String?,
-    val lastModified: String?,
     val fileLastModified: String,
     val sizeBytes: Long,
     val size: String,
@@ -140,26 +125,18 @@ class MediaDto(
 @Serializable
 class PageDto(
     val number: Int,
-    val fileName: String,
     val mediaType: String,
 )
 
 @Serializable
 class BookMetadataDto(
     val title: String,
-    val titleLock: Boolean,
     val summary: String?,
-    val summaryLock: Boolean,
     val number: String?,
-    val numberLock: Boolean,
     val numberSort: Float?,
-    val numberSortLock: Boolean,
     val releaseDate: String?,
-    val releaseDateLock: Boolean,
     val authors: List<AuthorDto>,
-    val authorsLock: Boolean,
     val tags: Set<String>,
-    val tagsLock: Boolean,
 )
 
 @Serializable
