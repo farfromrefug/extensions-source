@@ -94,6 +94,7 @@ for apk in REPO_APK_DIR.iterdir():
                 "lang": source["lang"],
                 "id": source["id"],
                 "baseUrl": source["baseUrl"],
+                "iconUrl": f"{BASE_URL}/{package_name}.png" if BASE_URL else f"icon/{package_name}.png",
                 "versionId": source["versionId"],
             }
         )
