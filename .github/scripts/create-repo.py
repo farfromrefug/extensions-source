@@ -79,6 +79,7 @@ for apk in REPO_APK_DIR.iterdir():
         "apk": apk_url,
         "lang": language,
         "code": int(VERSION_CODE_REGEX.search(package_info).group(1)),
+        "iconUrl": f"{BASE_URL}/{package_name}.png" if BASE_URL else f"icon/{package_name}.png",
         "version": VERSION_NAME_REGEX.search(package_info).group(1),
         "nsfw": int(IS_NSFW_REGEX.search(badging).group(1)),
     }
