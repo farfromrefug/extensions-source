@@ -208,7 +208,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.version }}
         run: |
-          gh release upload "$RELEASE_TAG" repo.json" --clobber
+          gh release upload "$RELEASE_TAG" "repo.json" --clobber
 
       - name: Upload index.json to release
         env:
