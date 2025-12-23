@@ -46,7 +46,6 @@ import java.security.MessageDigest
 import java.util.Locale
 
 open class Booklore(private val suffix: String = "") : ConfigurableSource, UnmeteredSource, HttpSource() {
-
     internal val preferences: SharedPreferences by getPreferencesLazy()
 
     private val displayName by lazy { preferences.getString(PREF_DISPLAY_NAME, "")!! }
@@ -212,12 +211,19 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
 
     override fun getChapterUrl(chapter: SChapter) = chapter.url.replace("/api/v1/books", "/book")
 
-    override fun chapterListRequest(manga: SManga): Request = when {
-        manga.url.isFromBook() -> GET("${manga.url}?unpaged=true&media_status=READY&deleted=false", headers)
-        else -> GET("${manga.url}/books?unpaged=true&media_status=READY&deleted=false", headers)
+    override fun chapterListRequest(manga: SManga, page: Int): Request = when {
+        manga.url.isFromBook() -> GET("${manga.url}?page=$page&size=20&media_status=READY&deleted=false", headers)
+        else -> GET("${manga.url}/books?page=$page&size=20&media_status=READY&deleted=false", headers)
+    }
+
+    override fun supportsChapterListPagination(): Boolean {
+        return true
     }
 
     override fun chapterListParse(response: Response): List<SChapter> {
+        return chapterListParse(response, null)
+    }
+    override fun chapterListParse(response: Response, hasNextPage: MutableList<Boolean>?): List<SChapter> {
         if (response.isFromBook()) {
             val book = response.parseAs<BookDto>()
             return listOf(
@@ -239,9 +245,14 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
                 },
             )
         }
-        val page = response.parseAs<PageWrapperDto<BookDto>>().content
+        val result = response.parseAs<PageWrapperDto<BookDto>>()
+        val page = result.content
         val isFromReadList = response.isFromReadList()
         val chapterNameTemplate = chapterNameTemplate
+        Log.d(TAG, "chapterListParse last${result.last} totalPages${result.totalPages} number${result.number} size${result.size} first${result.first}")
+        if (hasNextPage != null) {
+            hasNextPage.set(0, !result.last)
+        }
 
         return page
             .filter {
@@ -533,6 +544,7 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
     private val logTag by lazy { "booklore${if (suffix.isNotBlank()) ".$suffix" else ""}" }
 
     companion object {
+        internal const val TAG = "Booklore"
         internal const val PREF_EXTRA_SOURCES_COUNT = "Number of extra sources"
         internal const val PREF_EXTRA_SOURCES_DEFAULT = "2"
 
