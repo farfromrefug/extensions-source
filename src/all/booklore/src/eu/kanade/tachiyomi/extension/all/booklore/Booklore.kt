@@ -306,6 +306,14 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
         return GET(page.imageUrl!!, headers = headersBuilder().add("Accept", "image/*,*/*;q=0.8").build())
     }
 
+    override fun getChapterArchiveUrl(chapter: SChapter): String? {
+        return "${chapter.url}/file"
+    }
+
+    override fun getChapterArchiveDownloadRequest(url: String, chapter: SChapter): Request? {
+        return GET(url, headers)
+    }
+
     override fun getFilterList(): FilterList {
         fetchFilterOptions()
 
