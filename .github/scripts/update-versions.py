@@ -27,19 +27,22 @@ def update_version_code(file_path: Path, increment: int = 1) -> Tuple[str, int, 
     name_match = re.search(r"extName\s*=\s*['\"](.+?)['\"]", content)
     app_name = name_match.group(1) if name_match else file_path.parent.name
     
-    # Find and update extVersionCode using regex with specific pattern
-    version_match = re.search(r"(extVersionCode\s*=\s*)(\d+)", content)
+    # Find and update extVersionCode using consistent regex pattern
+    version_pattern = r"extVersionCode\s*=\s*\d+"
+    version_match = re.search(version_pattern, content)
     if not version_match:
         print(f"Warning: No extVersionCode found in {file_path}", file=sys.stderr)
         return app_name, 0, 0
     
-    old_version = int(version_match.group(2))
+    # Extract just the number for old version
+    old_version_match = re.search(r"\d+", version_match.group(0))
+    old_version = int(old_version_match.group(0)) if old_version_match else 0
     new_version = old_version + increment
     
-    # Replace only the matched extVersionCode (use re.sub with count=1 for safety)
+    # Replace only the first occurrence of extVersionCode
     new_content = re.sub(
-        r"(extVersionCode\s*=\s*)\d+",
-        f"\\g<1>{new_version}",
+        version_pattern,
+        f"extVersionCode = {new_version}",
         content,
         count=1
     )

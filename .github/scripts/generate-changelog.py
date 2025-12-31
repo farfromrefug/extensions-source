@@ -24,9 +24,9 @@ def get_app_from_path(file_path: str) -> Optional[str]:
 def get_commits_since_tag(tag: Optional[str]) -> List[str]:
     """Get commits since the given tag, or all commits if no tag."""
     # Validate tag format if provided to prevent injection
+    # Accept semantic version tags (v1.2.3 or 1.2.3) only
     if tag:
-        # Tag should match version format or git ref format
-        if not re.match(r'^[a-zA-Z0-9._/-]+$', tag):
+        if not re.match(r'^v?[0-9]+\.[0-9]+\.[0-9]+$', tag):
             print(f"Warning: Invalid tag format '{tag}', getting all commits", file=sys.stderr)
             tag = None
     
