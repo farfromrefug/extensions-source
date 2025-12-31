@@ -7,9 +7,10 @@ import os
 import sys
 import re
 from pathlib import Path
+from typing import List
 
 
-def find_build_gradle_files(src_dir: str) -> list[Path]:
+def find_build_gradle_files(src_dir: str) -> List[Path]:
     """Find all build.gradle files in src directory."""
     src_path = Path(src_dir)
     return list(src_path.rglob("build.gradle"))

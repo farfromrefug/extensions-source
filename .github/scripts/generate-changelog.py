@@ -9,7 +9,7 @@ import subprocess
 import re
 from pathlib import Path
 from collections import defaultdict
-from typing import Optional
+from typing import Optional, List, Dict, Set
 
 
 def get_app_from_path(file_path: str) -> Optional[str]:
@@ -21,7 +21,7 @@ def get_app_from_path(file_path: str) -> Optional[str]:
     return None
 
 
-def get_commits_since_tag(tag: Optional[str]) -> list[str]:
+def get_commits_since_tag(tag: Optional[str]) -> List[str]:
     """Get commits since the given tag, or all commits if no tag."""
     if tag:
         cmd = ["git", "log", f"{tag}..HEAD", "--pretty=format:%H"]
@@ -32,7 +32,7 @@ def get_commits_since_tag(tag: Optional[str]) -> list[str]:
     return result.stdout.strip().split('\n') if result.stdout.strip() else []
 
 
-def get_commit_info(commit_hash: str) -> dict:
+def get_commit_info(commit_hash: str) -> Dict:
     """Get commit message and changed files for a commit."""
     # Get commit message
     msg_result = subprocess.run(
@@ -59,7 +59,7 @@ def get_commit_info(commit_hash: str) -> dict:
     }
 
 
-def parse_conventional_commit(message: str) -> Optional[dict]:
+def parse_conventional_commit(message: str) -> Optional[Dict]:
     """
     Parse conventional commit message.
     Format: type(scope)?: description
@@ -78,7 +78,7 @@ def parse_conventional_commit(message: str) -> Optional[dict]:
     return None
 
 
-def detect_affected_apps(files: list[str]) -> set[str]:
+def detect_affected_apps(files: List[str]) -> Set[str]:
     """Detect which apps are affected by the changed files."""
     apps = set()
     for file_path in files:
@@ -185,7 +185,7 @@ def main():
     """Main entry point."""
     since_tag = sys.argv[1] if len(sys.argv) > 1 else None
     
-    if since_tag and since_tag != 'null':
+    if since_tag and since_tag.strip():
         print(f"Generating changelog since {since_tag}...", file=sys.stderr)
     else:
         print("Generating changelog for all commits...", file=sys.stderr)

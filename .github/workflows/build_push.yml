@@ -171,9 +171,12 @@ jobs:
         run: |
           # Get the latest tag for changelog generation
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          if [ -z "$LATEST_TAG" ] || [ "${{ github.event.inputs.version_update }}" != "none" ]; then
-            echo "Generating changelog since ${LATEST_TAG:-beginning}"
+          if [ -n "$LATEST_TAG" ] && [ "${{ github.event.inputs.version_update }}" != "none" ]; then
+            echo "Generating changelog since ${LATEST_TAG}"
             CHANGELOG=$(python ./.github/scripts/generate-changelog.py "$LATEST_TAG")
+          elif [ -z "$LATEST_TAG" ]; then
+            echo "Generating changelog from beginning (no tags found)"
+            CHANGELOG=$(python ./.github/scripts/generate-changelog.py "")
           else
             CHANGELOG="Updating existing release with latest builds."
           fi
