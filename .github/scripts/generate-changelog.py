@@ -43,9 +43,9 @@ def get_commit_info(commit_hash: str) -> dict:
     )
     message = msg_result.stdout.strip()
     
-    # Get changed files
+    # Get changed files - use git show for initial commits
     files_result = subprocess.run(
-        ["git", "diff-tree", "--no-commit-id", "--name-only", "-r", commit_hash],
+        ["git", "show", "--name-only", "--pretty=", commit_hash],
         capture_output=True,
         text=True,
         check=True
