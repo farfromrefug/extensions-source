@@ -52,18 +52,28 @@ def increment_version(tag: str, update_type: str = 'patch') -> str:
     
     Args:
         tag: Current version tag (e.g., v1.2.3)
-        update_type: Type of update (patch, minor, major)
+        update_type: Type of update ('patch', 'minor', or 'major')
     
     Returns:
         New version tag
+        
+    Raises:
+        ValueError: If update_type is not valid
     """
+    valid_types = ['patch', 'minor', 'major']
+    if update_type not in valid_types:
+        raise ValueError(
+            f"Invalid update_type '{update_type}'. "
+            f"Must be one of: {', '.join(valid_types)}"
+        )
+    
     major, minor, patch = parse_semver(tag)
     
     if update_type == 'major':
         return f"v{major + 1}.0.0"
     elif update_type == 'minor':
         return f"v{major}.{minor + 1}.0"
-    else:  # patch or default
+    else:  # patch
         return f"v{major}.{minor}.{patch + 1}"
 
 

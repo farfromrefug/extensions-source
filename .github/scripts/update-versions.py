@@ -50,9 +50,19 @@ def get_version_increment(update_type: str) -> int:
     """
     Get the increment value based on update type.
     For extVersionCode, we use simple increments:
+    - none: no change (0)
     - patch: +1
     - minor: +10
     - major: +100
+    
+    Args:
+        update_type: One of 'none', 'patch', 'minor', or 'major'
+    
+    Returns:
+        Increment value
+        
+    Raises:
+        ValueError: If update_type is not recognized
     """
     increments = {
         'none': 0,
@@ -60,7 +70,14 @@ def get_version_increment(update_type: str) -> int:
         'minor': 10,
         'major': 100
     }
-    return increments.get(update_type, 0)
+    
+    if update_type not in increments:
+        raise ValueError(
+            f"Invalid update_type '{update_type}'. "
+            f"Must be one of: {', '.join(increments.keys())}"
+        )
+    
+    return increments[update_type]
 
 
 def main():
