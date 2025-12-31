@@ -7,7 +7,7 @@ import os
 import sys
 import re
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 
 def find_build_gradle_files(src_dir: str) -> List[Path]:
@@ -16,7 +16,7 @@ def find_build_gradle_files(src_dir: str) -> List[Path]:
     return list(src_path.rglob("build.gradle"))
 
 
-def update_version_code(file_path: Path, increment: int = 1) -> tuple[str, int, int]:
+def update_version_code(file_path: Path, increment: int = 1) -> Tuple[str, int, int]:
     """
     Update extVersionCode in a build.gradle file.
     Returns tuple of (app_name, old_version, new_version)

@@ -6,7 +6,7 @@ Handles versioning and release creation/updates.
 import os
 import sys
 import subprocess
-from typing import Optional
+from typing import Optional, Tuple
 
 
 def get_latest_tag() -> Optional[str]:
@@ -39,7 +39,7 @@ def get_current_tag() -> Optional[str]:
         return None
 
 
-def parse_semver(tag: str) -> tuple[int, int, int]:
+def parse_semver(tag: str) -> Tuple[int, int, int]:
     """Parse semantic version from tag (e.g., v1.2.3 or 1.2.3)."""
     tag = tag.lstrip('v')
     parts = tag.split('.')

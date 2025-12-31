@@ -9,7 +9,7 @@ import subprocess
 import re
 from pathlib import Path
 from collections import defaultdict
-from typing import Optional, List, Dict, Set
+from typing import Optional, List, Dict, Set, Any
 
 
 def get_app_from_path(file_path: str) -> Optional[str]:
@@ -32,7 +32,7 @@ def get_commits_since_tag(tag: Optional[str]) -> List[str]:
     return result.stdout.strip().split('\n') if result.stdout.strip() else []
 
 
-def get_commit_info(commit_hash: str) -> Dict:
+def get_commit_info(commit_hash: str) -> Dict[str, Any]:
     """Get commit message and changed files for a commit."""
     # Get commit message
     msg_result = subprocess.run(
@@ -59,7 +59,7 @@ def get_commit_info(commit_hash: str) -> Dict:
     }
 
 
-def parse_conventional_commit(message: str) -> Optional[Dict]:
+def parse_conventional_commit(message: str) -> Optional[Dict[str, Any]]:
     """
     Parse conventional commit message.
     Format: type(scope)?: description
