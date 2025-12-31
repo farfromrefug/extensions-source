@@ -119,7 +119,8 @@ def get_version_from_gradle() -> Optional[str]:
     
     content = common_gradle.read_text()
     # Match versionName pattern like: versionName "2.0.$versionCode"
-    match = re.search(r'versionName\s+"(\d+\.\d+)\.\$versionCode"', content)
+    # Flexible whitespace and quote handling
+    match = re.search(r'versionName\s+["\'](\d+\.\d+)\.\$versionCode["\']', content)
     if match:
         return match.group(1)
     
@@ -153,6 +154,21 @@ def get_max_version_code(src_dir: str = "src") -> int:
     return max_version_code
 
 
+def get_actual_version() -> Optional[str]:
+    """
+    Get the actual version that will be in the built APKs.
+    Combines versionName from common.gradle with max extVersionCode.
+    
+    Returns:
+        Version string (e.g., "v2.0.65") or None if unable to determine
+    """
+    gradle_version = get_version_from_gradle()
+    max_version_code = get_max_version_code()
+    if gradle_version and max_version_code > 0:
+        return f"v{gradle_version}.{max_version_code}"
+    return None
+
+
 def determine_version(update_type: str = 'none') -> str:
     """
     Determine the version to use for the release.
@@ -172,12 +188,10 @@ def determine_version(update_type: str = 'none') -> str:
         print(f"Building from tag: {current_tag}", file=sys.stderr)
         # If update type is specified, use the actual version from gradle
         if update_type != 'none':
-            gradle_version = get_version_from_gradle()
-            max_version_code = get_max_version_code()
-            if gradle_version and max_version_code > 0:
-                new_version = f"v{gradle_version}.{max_version_code}"
-                print(f"Using actual version from APKs: {new_version}", file=sys.stderr)
-                return new_version
+            actual_version = get_actual_version()
+            if actual_version:
+                print(f"Using actual version from APKs: {actual_version}", file=sys.stderr)
+                return actual_version
             # Fallback to old behavior
             new_version = increment_version(current_tag, update_type)
             print(f"Incrementing version: {current_tag} -> {new_version}", file=sys.stderr)
@@ -195,12 +209,10 @@ def determine_version(update_type: str = 'none') -> str:
         return latest_tag
     
     # For version updates, use the actual version from gradle
-    gradle_version = get_version_from_gradle()
-    max_version_code = get_max_version_code()
-    if gradle_version and max_version_code > 0:
-        new_version = f"v{gradle_version}.{max_version_code}"
-        print(f"Creating new version from APKs: {new_version}", file=sys.stderr)
-        return new_version
+    actual_version = get_actual_version()
+    if actual_version:
+        print(f"Creating new version from APKs: {actual_version}", file=sys.stderr)
+        return actual_version
     
     # Fallback to old behavior
     new_version = increment_version(latest_tag, update_type)

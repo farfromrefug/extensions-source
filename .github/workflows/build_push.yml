@@ -63,9 +63,7 @@ jobs:
   prepare:
     name: Prepare job
     needs: [update-versions]
-    if: |
-      always() && 
-      (needs.update-versions.result == 'success' || needs.update-versions.result == 'skipped')
+    if: always() && (needs.update-versions.result == 'success' || needs.update-versions.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
