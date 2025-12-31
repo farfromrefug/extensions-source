@@ -34,37 +34,45 @@ def get_commits_since_tag(tag: Optional[str]) -> List[str]:
 
 def get_commit_info(commit_hash: str) -> Dict[str, Any]:
     """Get commit message and changed files for a commit."""
-    # Get commit message
-    msg_result = subprocess.run(
-        ["git", "log", "-1", "--pretty=format:%s", commit_hash],
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    message = msg_result.stdout.strip()
-    
-    # Get changed files - use git show for initial commits
-    files_result = subprocess.run(
-        ["git", "show", "--name-only", "--pretty=", commit_hash],
-        capture_output=True,
-        text=True,
-        check=True
-    )
-    files = files_result.stdout.strip().split('\n') if files_result.stdout.strip() else []
-    
-    return {
-        'message': message,
-        'files': files,
-        'hash': commit_hash[:7]
-    }
+    try:
+        # Get commit message
+        msg_result = subprocess.run(
+            ["git", "log", "-1", "--pretty=format:%s", commit_hash],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        message = msg_result.stdout.strip()
+        
+        # Get changed files - use git show for initial commits
+        files_result = subprocess.run(
+            ["git", "show", "--name-only", "--pretty=", commit_hash],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        files = files_result.stdout.strip().split('\n') if files_result.stdout.strip() else []
+        
+        return {
+            'message': message,
+            'files': files,
+            'hash': commit_hash[:7]
+        }
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Failed to get info for commit {commit_hash}: {e}", file=sys.stderr)
+        return {
+            'message': f"<commit {commit_hash[:7]}>",
+            'files': [],
+            'hash': commit_hash[:7]
+        }
 
 
 def parse_conventional_commit(message: str) -> Optional[Dict[str, Any]]:
     """
     Parse conventional commit message.
-    Format: type(scope)?: description
+    Format: type(scope)?: description, type!: description, or type(scope)!: description
     """
-    # Match: type(scope)!?: description or type!?: description
+    # Match: type(scope)?: description, type!: description, or type(scope)!: description
     pattern = r'^(\w+)(?:\(([^)]+)\))?(!)?:\s*(.+)$'
     match = re.match(pattern, message)
     

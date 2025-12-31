@@ -40,10 +40,34 @@ def get_current_tag() -> Optional[str]:
 
 
 def parse_semver(tag: str) -> Tuple[int, int, int]:
-    """Parse semantic version from tag (e.g., v1.2.3 or 1.2.3)."""
+    """
+    Parse semantic version from tag (e.g., v1.2.3 or 1.2.3).
+    
+    Args:
+        tag: Version tag string
+        
+    Returns:
+        Tuple of (major, minor, patch) version numbers
+        
+    Raises:
+        ValueError: If tag format is invalid
+    """
     tag = tag.lstrip('v')
     parts = tag.split('.')
-    return int(parts[0]), int(parts[1]), int(parts[2])
+    
+    if len(parts) != 3:
+        raise ValueError(
+            f"Invalid version tag '{tag}'. "
+            "Expected format: v<major>.<minor>.<patch> (e.g., v1.2.3)"
+        )
+    
+    try:
+        return int(parts[0]), int(parts[1]), int(parts[2])
+    except ValueError:
+        raise ValueError(
+            f"Invalid version tag '{tag}'. "
+            "All version components must be integers."
+        )
 
 
 def increment_version(tag: str, update_type: str = 'patch') -> str:
