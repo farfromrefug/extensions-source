@@ -23,13 +23,24 @@ def get_app_from_path(file_path: str) -> Optional[str]:
 
 def get_commits_since_tag(tag: Optional[str]) -> List[str]:
     """Get commits since the given tag, or all commits if no tag."""
+    # Validate tag format if provided to prevent injection
+    if tag:
+        # Tag should match version format or git ref format
+        if not re.match(r'^[a-zA-Z0-9._/-]+$', tag):
+            print(f"Warning: Invalid tag format '{tag}', getting all commits", file=sys.stderr)
+            tag = None
+    
     if tag:
         cmd = ["git", "log", f"{tag}..HEAD", "--pretty=format:%H"]
     else:
         cmd = ["git", "log", "--pretty=format:%H"]
     
-    result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-    return result.stdout.strip().split('\n') if result.stdout.strip() else []
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        return result.stdout.strip().split('\n') if result.stdout.strip() else []
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Failed to get commits: {e}", file=sys.stderr)
+        return []
 
 
 def get_commit_info(commit_hash: str) -> Dict[str, Any]:

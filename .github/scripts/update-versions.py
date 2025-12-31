@@ -27,7 +27,7 @@ def update_version_code(file_path: Path, increment: int = 1) -> Tuple[str, int, 
     name_match = re.search(r"extName\s*=\s*['\"](.+?)['\"]", content)
     app_name = name_match.group(1) if name_match else file_path.parent.name
     
-    # Find and update extVersionCode
+    # Find and update extVersionCode using regex with specific pattern
     version_match = re.search(r"(extVersionCode\s*=\s*)(\d+)", content)
     if not version_match:
         print(f"Warning: No extVersionCode found in {file_path}", file=sys.stderr)
@@ -36,10 +36,12 @@ def update_version_code(file_path: Path, increment: int = 1) -> Tuple[str, int, 
     old_version = int(version_match.group(2))
     new_version = old_version + increment
     
-    # Replace the version
-    new_content = content.replace(
-        version_match.group(0),
-        f"{version_match.group(1)}{new_version}"
+    # Replace only the matched extVersionCode (use re.sub with count=1 for safety)
+    new_content = re.sub(
+        r"(extVersionCode\s*=\s*)\d+",
+        f"\\g<1>{new_version}",
+        content,
+        count=1
     )
     
     file_path.write_text(new_content)

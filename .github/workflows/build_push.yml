@@ -173,16 +173,14 @@ jobs:
           LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
           if [ -n "$LATEST_TAG" ] && [ "${{ github.event.inputs.version_update }}" != "none" ]; then
             echo "Generating changelog since ${LATEST_TAG}"
-            CHANGELOG=$(python ./.github/scripts/generate-changelog.py "$LATEST_TAG")
+            python ./.github/scripts/generate-changelog.py "$LATEST_TAG" > /tmp/changelog.txt
           elif [ -z "$LATEST_TAG" ]; then
             echo "Generating changelog from beginning (no tags found)"
-            CHANGELOG=$(python ./.github/scripts/generate-changelog.py "")
+            python ./.github/scripts/generate-changelog.py "" > /tmp/changelog.txt
           else
-            CHANGELOG="Updating existing release with latest builds."
+            echo "Updating existing release with latest builds." > /tmp/changelog.txt
           fi
           
-          # Save changelog to file for multi-line output
-          echo "$CHANGELOG" > /tmp/changelog.txt
           echo "changelog_file=/tmp/changelog.txt" >> $GITHUB_OUTPUT
 
       - name: Create repo artifacts
