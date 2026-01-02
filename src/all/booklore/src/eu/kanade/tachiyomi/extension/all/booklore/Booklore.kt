@@ -396,7 +396,6 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
             default = suffix,
             summary = displayName.ifBlank { "Here you can change the source displayed suffix" },
             key = PREF_DISPLAY_NAME,
-            restartRequired = true,
         )
         screen.addEditTextPreference(
             title = "Address",
@@ -407,7 +406,6 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
             validate = { it.toHttpUrlOrNull() != null && !it.endsWith("/") },
             validationMessage = "The URL is invalid, malformed, or ends with a slash",
             key = PREF_ADDRESS,
-            restartRequired = true,
         )
         // API key preference (takes precedence over username/password)
         screen.addEditTextPreference(
@@ -416,7 +414,6 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
             summary = if (apiKey.isBlank()) "Optional: Use an API key for authentication" else "*".repeat(apiKey.length),
             inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
             key = PREF_API_KEY,
-            restartRequired = true,
         )
         // Only show username/password if API key is not set
         if (apiKey.isBlank()) {
@@ -425,7 +422,6 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
                 default = "",
                 summary = username.ifBlank { "The user account email" },
                 key = PREF_USERNAME,
-                restartRequired = true,
             )
             screen.addEditTextPreference(
                 title = "Password",
@@ -433,7 +429,6 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
                 summary = if (password.isBlank()) "The user account password" else "*".repeat(password.length),
                 inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD,
                 key = PREF_PASSWORD,
-                restartRequired = true,
             )
         }
 

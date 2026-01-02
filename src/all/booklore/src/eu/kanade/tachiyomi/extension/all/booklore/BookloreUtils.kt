@@ -37,7 +37,6 @@ fun PreferenceScreen.addEditTextPreference(
     validate: ((String) -> Boolean)? = null,
     validationMessage: String? = null,
     key: String = title,
-    restartRequired: Boolean = false,
 ) {
     EditTextPreference(context).apply {
         this.key = key
@@ -79,11 +78,6 @@ fun PreferenceScreen.addEditTextPreference(
             try {
                 val text = newValue as String
                 val result = text.isBlank() || validate?.invoke(text) ?: true
-
-                if (restartRequired && result) {
-                    Toast.makeText(context, "Restart Tachiyomi to apply new setting.", Toast.LENGTH_LONG).show()
-                }
-
                 result
             } catch (e: Exception) {
                 e.printStackTrace()
