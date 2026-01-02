@@ -58,7 +58,7 @@ for apk in REPO_APK_DIR.iterdir():
         f.write(i.read())
 
     language = LANGUAGE_REGEX.search(apk.name).group(1)
-    sources = inspector_data[package_name]
+    sources = inspector_data.get(package_name, [])
 
     if len(sources) == 1:
         source_language = sources[0]["lang"]

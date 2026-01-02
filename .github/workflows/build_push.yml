@@ -1,16 +1,18 @@
 name: CI
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '**'
-      - '!**.md'
-      - '!.github/**'
-      - '.github/scripts/**'
-      - '.github/workflows/build_push.yml'
   workflow_dispatch:
+    inputs:
+      version_update:
+        description: 'Version update type'
+        required: true
+        default: 'none'
+        type: choice
+        options:
+          - none
+          - patch
+          - minor
+          - major
 
 permissions: {}
 
@@ -23,8 +25,45 @@ env:
   IS_PR_CHECK: false
 
 jobs:
+  update-versions:
+    name: Update versions
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: ${{ github.event.inputs.version_update != 'none' }}
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
+        with:
+          python-version: '3.x'
+
+      - name: Update extension versions
+        run: |
+          python ./.github/scripts/update-versions.py "src" "${{ github.event.inputs.version_update }}"
+
+      - name: Commit version updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/**/build.gradle common.gradle
+          if git diff --staged --quiet; then
+            echo "No version changes to commit"
+          else
+            git commit -m "chore: bump versions (${{ github.event.inputs.version_update }})"
+            git push
+          fi
+
   prepare:
     name: Prepare job
+    needs: [update-versions]
+    if: always() && (needs.update-versions.result == 'success' || needs.update-versions.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
@@ -142,24 +181,40 @@ jobs:
       - name: Determine release version
         id: version
         run: |
-          VERSION=$(python ./.github/scripts/manage-release.py)
+          VERSION=$(python ./.github/scripts/manage-release.py "${{ github.event.inputs.version_update || 'none' }}")
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Release version: $VERSION"
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the latest tag for changelog generation
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LATEST_TAG" ] && [ "${{ github.event.inputs.version_update }}" != "none" ]; then
+            echo "Generating changelog since ${LATEST_TAG}"
+            python ./.github/scripts/generate-changelog.py "${LATEST_TAG}" > /tmp/changelog.txt
+          elif [ -z "$LATEST_TAG" ]; then
+            echo "Generating changelog from beginning (no tags found)"
+            python ./.github/scripts/generate-changelog.py "" > /tmp/changelog.txt
+          else
+            echo "Updating existing release with latest builds." > /tmp/changelog.txt
+          fi
+          
+          echo "changelog_file=/tmp/changelog.txt" >> $GITHUB_OUTPUT
 
       - name: Create repo artifacts
         env:
           RELEASE_TAG: ${{ steps.version.outputs.version }}
         run: |
           python ./.github/scripts/move-built-apks.py
-          INSPECTOR_LINK="$(curl -s "https://api.github.com/repos/keiyoushi/extensions-inspector/releases/latest" | jq -r '.assets[0].browser_download_url')"
-          curl -L "$INSPECTOR_LINK" -o ./Inspector.jar
-          java -jar ./Inspector.jar "repo/apk" "output.json" "tmp"
+          echo '{}' > output.json
           python ./.github/scripts/create-repo.py "$RELEASE_TAG"
 
       - name: Create or update release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ steps.version.outputs.version }}
+          CHANGELOG_FILE: ${{ steps.changelog.outputs.changelog_file }}
         run: |
           # Check if release exists
           if gh release view "$RELEASE_TAG" > /dev/null 2>&1; then
@@ -172,11 +227,14 @@ jobs:
           git push origin :refs/tags/"$RELEASE_TAG" 2>/dev/null || true
           git tag -d "$RELEASE_TAG" 2>/dev/null || true
           
-          # Create new release with tag
+          # Read changelog from file
+          CHANGELOG_BODY=$(cat "$CHANGELOG_FILE")
+          
+          # Create new release with tag and changelog
           echo "Creating release $RELEASE_TAG..."
           gh release create "$RELEASE_TAG" \
-            --title "Extensions Release $RELEASE_TAG" \
-            --notes "Automated release of extension APKs and repository index." \
+            --title "$RELEASE_TAG" \
+            --notes "$CHANGELOG_BODY" \
             --latest
 
       - name: Upload APKs to release
