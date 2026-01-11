@@ -1,0 +1,12 @@
+ext {
+    extName = 'API Mangas'
+    extClass = '.ApiMangas'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
+
+dependencies {
+    // CryptoAES library for decrypting images with AES
+    implementation(project(':lib-cryptoaes'))
+}
