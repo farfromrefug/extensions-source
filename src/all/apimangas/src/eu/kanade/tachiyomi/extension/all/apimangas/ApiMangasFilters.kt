@@ -78,8 +78,8 @@ class ContentRatingFilter : Filter.Group<RatingFilter>(
     ),
 ), UriFilter {
     override fun addToUri(builder: HttpUrl.Builder) {
-        val included = state.filter { it.state == STATE_INCLUDE }.map { it.name }
-        val excluded = state.filter { it.state == STATE_EXCLUDE }.map { it.name }
+        val included = state.filter { it.state == Filter.TriState.STATE_INCLUDE }.map { it.name }
+        val excluded = state.filter { it.state == Filter.TriState.STATE_EXCLUDE }.map { it.name }
 
         if (included.isNotEmpty()) {
             builder.addQueryParameter("rating_include", included.joinToString(","))

@@ -69,7 +69,7 @@ class ApiMangas : ConfigurableSource, HttpSource() {
         get() = preferences.getString(PREF_PASSWORD, "")!!
 
     // JSON serializer for parsing API responses and storing metadata
-    private val json: Json by injectLazy()
+    private val json: Json = Json { ignoreUnknownKeys = true }
 
     /**
      * Custom OkHttpClient with authentication and image decryption interceptor
@@ -246,7 +246,7 @@ class ApiMangas : ConfigurableSource, HttpSource() {
     }
 
     override fun getFilterList(): FilterList {
-        return FilterList(getFilterList())
+        return FilterList(eu.kanade.tachiyomi.extension.all.apimangas.getFilterList())
     }
 
     // ============================

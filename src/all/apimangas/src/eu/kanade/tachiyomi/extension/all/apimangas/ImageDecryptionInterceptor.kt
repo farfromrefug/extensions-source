@@ -56,8 +56,9 @@ class ImageDecryptionInterceptor : Interceptor {
         }
 
         // Get the encrypted image data
-        val encryptedData = response.body.bytes()
-        val contentType = response.body.contentType()
+        val responseBody = response.body
+        val encryptedData = responseBody.bytes()
+        val contentType = responseBody.contentType()
 
         return try {
             // Decrypt the image data
@@ -126,7 +127,14 @@ class ImageDecryptionInterceptor : Interceptor {
     /**
      * Alternative: Use CryptoAES library for CryptoJS-compatible decryption
      * This is useful if the API uses CryptoJS on the server side
+     * 
+     * Example usage (uncomment and integrate if needed):
+     * ```
+     * val decryptedText = decryptWithCryptoAES(base64CipherText, password)
+     * return decryptedText.toByteArray()
+     * ```
      */
+    @Suppress("unused")
     private fun decryptWithCryptoAES(cipherText: String, password: String): String {
         return CryptoAES.decrypt(cipherText, password)
     }
