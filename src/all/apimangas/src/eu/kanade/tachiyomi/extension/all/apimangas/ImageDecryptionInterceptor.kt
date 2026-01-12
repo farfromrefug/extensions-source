@@ -137,13 +137,21 @@ class ImageDecryptionInterceptor : Interceptor {
      *
      * @param encryptedData Base64-encoded encrypted data (with "Salted__" prefix)
      * @param password The password/passphrase used for encryption
+     * @throws IllegalArgumentException if data format is invalid
      */
     private fun decryptCryptoJSAES(encryptedData: ByteArray, password: String): ByteArray {
-        // Decode if base64
-        val ctBytes = try {
-            Base64.decode(encryptedData, Base64.DEFAULT)
-        } catch (e: Exception) {
-            encryptedData
+        // Decode base64 - throw if invalid
+        val ctBytes = Base64.decode(encryptedData, Base64.DEFAULT)
+
+        // Validate minimum length (must have "Salted__" (8 bytes) + salt (8 bytes) + at least 1 byte of data)
+        if (ctBytes.size < 17) {
+            throw IllegalArgumentException("CryptoJS data too short: ${ctBytes.size} bytes")
+        }
+
+        // Validate "Salted__" prefix
+        val prefix = ctBytes.sliceArray(0..7)
+        if (!prefix.contentEquals("Salted__".toByteArray(Charsets.US_ASCII))) {
+            throw IllegalArgumentException("CryptoJS data missing 'Salted__' prefix")
         }
 
         // Extract salt (bytes 8-16 after "Salted__" prefix)
@@ -153,11 +161,12 @@ class ImageDecryptionInterceptor : Interceptor {
         // Generate key and IV using MD5 (OpenSSL EVP_BytesToKey)
         val md5 = MessageDigest.getInstance("MD5")
         val keyAndIV = generateKeyAndIV(32, 16, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
+            ?: throw IllegalStateException("Failed to generate encryption key and IV")
 
         // Decrypt
         val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-        val secretKey = SecretKeySpec(keyAndIV?.get(0) ?: ByteArray(32), "AES")
-        val ivSpec = IvParameterSpec(keyAndIV?.get(1) ?: ByteArray(16))
+        val secretKey = SecretKeySpec(keyAndIV[0], "AES")
+        val ivSpec = IvParameterSpec(keyAndIV[1])
 
         cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec)
         return cipher.doFinal(cipherTextBytes)
