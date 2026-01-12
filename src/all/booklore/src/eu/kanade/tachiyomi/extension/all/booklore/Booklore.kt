@@ -83,7 +83,7 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
     private val json: Json by injectLazy()
 
     override fun headersBuilder() = super.headersBuilder()
-        .set("User-Agent", "TachiyomiBooklore/${AppInfo.getVersionName()}")
+        .set("User-Agent", "Koma-Booklore/${AppInfo.getVersionName()}")
         .also { builder ->
             if (apiKey.isNotBlank()) {
                 builder.set("X-API-Key", apiKey)
