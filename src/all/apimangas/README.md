@@ -57,7 +57,7 @@ The `ImageDecryptionInterceptor` supports:
 - **AES-256-CBC** encryption
 - **AES-128-CBC** encryption  
 - **XOR** encryption (simple example)
-- **CryptoJS-compatible** decryption (via CryptoAES library)
+- **CryptoJS-compatible** decryption (using standard Java crypto APIs)
 
 See `ImageDecryptionInterceptor.kt` for implementation details.
 
@@ -253,7 +253,7 @@ interface MetadataStore {
 ## Dependencies
 
 This extension uses:
-- `lib-cryptoaes` - For CryptoJS-compatible AES decryption
+- Standard Android/Java crypto APIs (javax.crypto) - no external dependencies
 - Standard Kotlin serialization for JSON
 - OkHttp for network requests
 

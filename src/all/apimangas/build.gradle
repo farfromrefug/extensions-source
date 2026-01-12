@@ -6,7 +6,4 @@ ext {
 
 apply from: "$rootDir/common.gradle"
 
-dependencies {
-    // CryptoAES library for decrypting images with AES
-    implementation(project(':lib-cryptoaes'))
-}
+// No additional dependencies needed - uses standard Android crypto APIs (javax.crypto)

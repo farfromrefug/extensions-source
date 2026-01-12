@@ -1,12 +1,12 @@
 package eu.kanade.tachiyomi.extension.all.apimangas
 
 import android.util.Base64
-import eu.kanade.tachiyomi.lib.cryptoaes.CryptoAES
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.Protocol
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
+import java.security.MessageDigest
 import javax.crypto.Cipher
 import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -17,6 +17,8 @@ import javax.crypto.spec.SecretKeySpec
  * This interceptor handles decryption of images downloaded from the API.
  * It checks for special headers or query parameters containing decryption keys
  * and applies the appropriate decryption algorithm.
+ *
+ * Uses standard Android crypto APIs (javax.crypto) - no external dependencies needed.
  *
  * Usage:
  * 1. Include decryption info in the image URL as query parameters
@@ -69,6 +71,10 @@ class ImageDecryptionInterceptor : Interceptor {
                 "xor" -> {
                     decryptXOR(encryptedData, decryptionKey)
                 }
+                "cryptojs-aes" -> {
+                    // CryptoJS-compatible AES decryption
+                    decryptCryptoJSAES(encryptedData, decryptionKey)
+                }
                 else -> {
                     // Unknown method, return encrypted data
                     encryptedData
@@ -94,7 +100,7 @@ class ImageDecryptionInterceptor : Interceptor {
     }
 
     /**
-     * Decrypt data using AES encryption
+     * Decrypt data using AES encryption with explicit key and IV
      */
     private fun decryptAES(data: ByteArray, keyBase64: String, ivBase64: String?): ByteArray {
         val keyBytes = Base64.decode(keyBase64, Base64.DEFAULT)
@@ -125,17 +131,96 @@ class ImageDecryptionInterceptor : Interceptor {
     }
 
     /**
-     * Alternative: Use CryptoAES library for CryptoJS-compatible decryption
-     * This is useful if the API uses CryptoJS on the server side
-     * 
-     * Example usage (uncomment and integrate if needed):
-     * ```
-     * val decryptedText = decryptWithCryptoAES(base64CipherText, password)
-     * return decryptedText.toByteArray()
-     * ```
+     * Decrypt using CryptoJS-compatible AES method
+     * Uses KDF equivalent to OpenSSL's EVP_BytesToKey function
+     * Compatible with CryptoJS.AES.decrypt() on the server side
+     *
+     * @param encryptedData Base64-encoded encrypted data (with "Salted__" prefix)
+     * @param password The password/passphrase used for encryption
      */
-    @Suppress("unused")
-    private fun decryptWithCryptoAES(cipherText: String, password: String): String {
-        return CryptoAES.decrypt(cipherText, password)
+    private fun decryptCryptoJSAES(encryptedData: ByteArray, password: String): ByteArray {
+        // Decode if base64
+        val ctBytes = try {
+            Base64.decode(encryptedData, Base64.DEFAULT)
+        } catch (e: Exception) {
+            encryptedData
+        }
+
+        // Extract salt (bytes 8-16 after "Salted__" prefix)
+        val saltBytes = ctBytes.copyOfRange(8, 16)
+        val cipherTextBytes = ctBytes.copyOfRange(16, ctBytes.size)
+
+        // Generate key and IV using MD5 (OpenSSL EVP_BytesToKey)
+        val md5 = MessageDigest.getInstance("MD5")
+        val keyAndIV = generateKeyAndIV(32, 16, 1, saltBytes, password.toByteArray(Charsets.UTF_8), md5)
+
+        // Decrypt
+        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+        val secretKey = SecretKeySpec(keyAndIV?.get(0) ?: ByteArray(32), "AES")
+        val ivSpec = IvParameterSpec(keyAndIV?.get(1) ?: ByteArray(16))
+
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, ivSpec)
+        return cipher.doFinal(cipherTextBytes)
+    }
+
+    /**
+     * Generates a key and an initialization vector (IV) with the given salt and password.
+     * This is equivalent to OpenSSL's EVP_BytesToKey function.
+     *
+     * @param keyLength the length of the generated key (in bytes)
+     * @param ivLength the length of the generated IV (in bytes)
+     * @param iterations the number of digestion rounds
+     * @param salt the salt data (8 bytes of data)
+     * @param password the password data
+     * @param md the message digest algorithm to use
+     * @return an two-element array with the generated key and IV
+     */
+    @Suppress("SameParameterValue")
+    private fun generateKeyAndIV(
+        keyLength: Int,
+        ivLength: Int,
+        iterations: Int,
+        salt: ByteArray,
+        password: ByteArray,
+        md: MessageDigest,
+    ): Array<ByteArray?>? {
+        val digestLength = md.digestLength
+        val requiredLength = (keyLength + ivLength + digestLength - 1) / digestLength * digestLength
+        val generatedData = ByteArray(requiredLength)
+        var generatedLength = 0
+
+        return try {
+            md.reset()
+
+            // Repeat process until sufficient data has been generated
+            while (generatedLength < keyLength + ivLength) {
+                // Digest data (last digest if available, password data, salt if available)
+                if (generatedLength > 0) {
+                    md.update(generatedData, generatedLength - digestLength, digestLength)
+                }
+                md.update(password)
+                md.update(salt, 0, 8)
+                md.digest(generatedData, generatedLength, digestLength)
+
+                // additional rounds
+                for (i in 1 until iterations) {
+                    md.update(generatedData, generatedLength, digestLength)
+                    md.digest(generatedData, generatedLength, digestLength)
+                }
+                generatedLength += digestLength
+            }
+
+            // Copy key and IV into separate byte arrays
+            val result = arrayOfNulls<ByteArray>(2)
+            result[0] = generatedData.copyOfRange(0, keyLength)
+            if (ivLength > 0) result[1] = generatedData.copyOfRange(keyLength, keyLength + ivLength)
+
+            // Clean out temporary data
+            generatedData.fill(0)
+
+            result
+        } catch (e: Exception) {
+            null
+        }
     }
 }

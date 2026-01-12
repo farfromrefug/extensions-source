@@ -70,7 +70,7 @@ Complete image decryption interceptor supporting:
 - **AES-256-CBC** encryption
 - **AES-128-CBC** encryption
 - **XOR** encryption (simple example)
-- **CryptoJS-compatible** decryption (via lib-cryptoaes)
+- **CryptoJS-compatible** decryption (using standard Java crypto APIs)
 - Automatic detection via URL parameters
 - Graceful fallback on decryption failure
 
