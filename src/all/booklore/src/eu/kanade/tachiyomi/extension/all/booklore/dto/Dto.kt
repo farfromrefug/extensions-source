@@ -53,11 +53,11 @@ class SeriesDto(
 @Serializable
 class SeriesMetadataDto(
     val status: String,
-    val title: String,
+    val title: String = "",
     val summary: String?,
     val language: String?,
-    val genres: Set<String>,
-    val tags: Set<String>,
+    val genres: Set<String> = emptySet(),
+    val tags: Set<String> = emptySet(),
     val totalBookCount: Int? = null,
 )
 
@@ -130,13 +130,13 @@ class PageDto(
 
 @Serializable
 class BookMetadataDto(
-    val title: String,
+    val title: String = "",
     val summary: String?,
     val number: String?,
     val numberSort: Float?,
     val releaseDate: String?,
-    val authors: List<AuthorDto>,
-    val tags: Set<String>,
+    val authors: List<AuthorDto> = emptyList(),
+    val tags: Set<String> = emptySet(),
 )
 
 @Serializable
