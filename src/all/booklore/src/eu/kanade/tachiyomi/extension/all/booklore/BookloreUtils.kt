@@ -3,7 +3,6 @@ package eu.kanade.tachiyomi.extension.all.booklore
 import android.text.Editable
 import android.text.TextWatcher
 import android.widget.Button
-import android.widget.Toast
 import androidx.preference.EditTextPreference
 import androidx.preference.PreferenceScreen
 import java.text.ParseException
