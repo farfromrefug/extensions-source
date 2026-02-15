@@ -145,6 +145,7 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
             .addQueryParameter("search", query)
             .addQueryParameter("page", (page - 1).toString())
             .addQueryParameter("deleted", "false")
+            .addQueryParameter("clean", "true")
 
         val filterList = filters.ifEmpty { getFilterList() }
         val defaultLibraries = defaultLibraries
@@ -212,8 +213,8 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
     override fun getChapterUrl(chapter: SChapter) = chapter.url.replace("/api/v1/books", "/book")
 
     override fun chapterListRequest(manga: SManga, page: Int): Request = when {
-        manga.url.isFromBook() -> GET("${manga.url}?page=$page&size=20&media_status=READY&deleted=false", headers)
-        else -> GET("${manga.url}/books?page=$page&size=20&media_status=READY&deleted=false", headers)
+        manga.url.isFromBook() -> GET("${manga.url}?page=$page&size=20&media_status=READY&deleted=false&clean=true", headers)
+        else -> GET("${manga.url}/books?page=$page&size=20&media_status=READY&deleted=false&clean=true", headers)
     }
 
     override fun supportsChapterListPagination(): Boolean {
@@ -510,22 +511,60 @@ open class Booklore(private val suffix: String = "") : ConfigurableSource, Unmet
         fetchFiltersAttempts++
 
         scope.launch {
+            var anySuccess = false
+
             try {
-                libraries = client.newCall(GET("$baseUrl/api/v1/libraries", headers)).await().parseAs()
-                collections = client
-                    .newCall(GET("$baseUrl/api/v1/collections?unpaged=true", headers))
-                    .await()
-                    .parseAs<PageWrapperDto<CollectionDto>>()
-                    .content
-                genres = client.newCall(GET("$baseUrl/api/v1/genres", headers)).await().parseAs()
-                tags = client.newCall(GET("$baseUrl/api/v1/tags", headers)).await().parseAs()
-                publishers = client.newCall(GET("$baseUrl/api/v1/publishers", headers)).await().parseAs()
-                authors = client
-                    .newCall(GET("$baseUrl/api/v1/authors", headers))
-                    .await()
-                    .parseAs<List<AuthorDto>>()
-                    .groupBy { it.role }
-                fetchFilterStatus = FetchFilterStatus.FETCHED
+                try {
+                    libraries = client.newCall(GET("$baseUrl/api/v1/libraries?clean", headers)).await().parseAs()
+                    anySuccess = true
+                } catch (e: Exception) {
+                    Log.w(logTag, "Failed to fetch libraries", e)
+                }
+
+                try {
+                    collections = client
+                        .newCall(GET("$baseUrl/api/v1/collections?unpaged=true&clean", headers))
+                        .await()
+                        .parseAs<PageWrapperDto<CollectionDto>>()
+                        .content
+                    anySuccess = true
+                } catch (e: Exception) {
+                    Log.w(logTag, "Failed to fetch collections", e)
+                }
+
+                try {
+                    genres = client.newCall(GET("$baseUrl/api/v1/genres?clean", headers)).await().parseAs()
+                    anySuccess = true
+                } catch (e: Exception) {
+                    Log.w(logTag, "Failed to fetch genres", e)
+                }
+
+                try {
+                    tags = client.newCall(GET("$baseUrl/api/v1/tags?clean", headers)).await().parseAs()
+                    anySuccess = true
+                } catch (e: Exception) {
+                    Log.w(logTag, "Failed to fetch tags", e)
+                }
+
+                try {
+                    publishers = client.newCall(GET("$baseUrl/api/v1/publishers?clean", headers)).await().parseAs()
+                    anySuccess = true
+                } catch (e: Exception) {
+                    Log.w(logTag, "Failed to fetch publishers", e)
+                }
+
+                try {
+                    authors = client
+                        .newCall(GET("$baseUrl/api/v1/authors?clean", headers))
+                        .await()
+                        .parseAs<List<AuthorDto>>()
+                        .groupBy { it.role }
+                    anySuccess = true
+                } catch (e: Exception) {
+                    Log.w(logTag, "Failed to fetch authors", e)
+                }
+
+                fetchFilterStatus = if (anySuccess) FetchFilterStatus.FETCHED else FetchFilterStatus.NOT_FETCHED
             } catch (e: Exception) {
                 fetchFilterStatus = FetchFilterStatus.NOT_FETCHED
                 Log.e(logTag, "Failed to fetch filtering options", e)
