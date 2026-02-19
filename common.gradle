@@ -108,6 +108,7 @@ tasks.register("writeManifestFile") {
     doLast {
         File tempFile = android.sourceSets.getByName('main').manifest.srcFile
         if (!tempFile.exists()) {
+            tempFile.parentFile.mkdirs()
             tempFile.write('<?xml version="1.0" encoding="utf-8"?>\n<manifest />\n')
         }
     }
