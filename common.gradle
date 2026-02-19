@@ -1,7 +1,6 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlinx-serialization'
-apply plugin: 'org.jmailen.kotlinter'
 
 assert !ext.has("pkgNameSuffix")
 assert !ext.has("libVersion")
@@ -84,18 +83,11 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-        freeCompilerArgs += "-opt-in=kotlinx.serialization.ExperimentalSerializationApi"
-    }
-
-    kotlinter {
-        experimentalRules = true
-        disabledRules = [
-            "experimental:argument-list-wrapping", // Doesn't play well with Android Studio
-            "experimental:comment-wrapping",
-        ]
+}
+kotlin {
+    jvmToolchain(17)
+    compilerOptions {
+        freeCompilerArgs.add("-opt-in=kotlinx.serialization.ExperimentalSerializationApi")
     }
 }
 
@@ -128,9 +120,4 @@ afterEvaluate {
         // https://stackoverflow.com/a/77745844
         doFirst { appMetadata.asFile.getOrNull()?.write('') }
     }
-}
-
-preBuild.dependsOn(writeManifestFile, lintKotlin)
-if (System.getenv("CI") != "true") {
-    lintKotlin.dependsOn(formatKotlin)
 }
