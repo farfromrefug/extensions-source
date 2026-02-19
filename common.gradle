@@ -121,3 +121,4 @@ afterEvaluate {
         doFirst { appMetadata.asFile.getOrNull()?.write('') }
     }
 }
+preBuild.dependsOn(writeManifestFile)
