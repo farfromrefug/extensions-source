@@ -17,3 +17,4 @@ generated-src/
 __pycache__/
 *.pyc
 *.pyo
+/.env

@@ -52,10 +52,10 @@ android {
 
     signingConfigs {
         release {
-            storeFile rootProject.file("signingkey.jks")
-            storePassword System.getenv("KEY_STORE_PASSWORD")
-            keyAlias System.getenv("ALIAS")
-            keyPassword System.getenv("KEY_PASSWORD")
+            storeFile rootProject.file("certs/signingkey.jks")
+            storePassword env.KEY_STORE_PASSWORD.orNull()
+            keyAlias env.ALIAS.orNull()
+            keyPassword env.KEY_PASSWORD.orNull()
         }
     }
 
@@ -64,6 +64,9 @@ android {
             signingConfig signingConfigs.release
             minifyEnabled false
             vcsInfo.include false
+
+            proguardFiles("proguard-android-optimize.txt", "proguard-rules.pro")
+
         }
     }
 
