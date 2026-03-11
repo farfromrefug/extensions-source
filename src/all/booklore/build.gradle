@@ -1,7 +1,7 @@
 ext {
     extName = 'Booklore'
     extClass = '.BookloreFactory'
-    extVersionCode = 71
+    extVersionCode = 72
 }
 
 apply from: "$rootDir/common.gradle"
