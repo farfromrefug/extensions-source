@@ -1,0 +1,9 @@
+ext {
+    extName = 'API Mangas'
+    extClass = '.ApiMangas'
+    extVersionCode = 1
+}
+
+apply from: "$rootDir/common.gradle"
+
+// No additional dependencies needed - uses standard Android crypto APIs (javax.crypto)
